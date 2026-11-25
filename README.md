@@ -1,5 +1,8 @@
 # n8n · Automatizaciones
 
+[![CI](https://github.com/allisonrvargas/n8n-automatizaciones/actions/workflows/ci.yml/badge.svg)](https://github.com/allisonrvargas/n8n-automatizaciones/actions/workflows/ci.yml)
+[![Licencia: MIT](https://img.shields.io/badge/licencia-MIT-green.svg)](LICENSE)
+
 Flujos de automatización con [n8n](https://n8n.io) para practicar integración de servicios, validación de datos y respuestas por webhook.
 
 ## Flujos
@@ -49,16 +52,24 @@ Sin `nombre` o `vacante` responde `400` con el mensaje de error.
 
 ## Pruebas
 
-Los 3 flujos se importaron y probaron en una instancia local de n8n 2.49.6, con peticiones válidas e inválidas a cada webhook. Ninguno usa credenciales ni servicios externos, así que se pueden importar y probar sin configurar nada.
+Además de probarlos a mano en una instancia local de n8n 2.49.6, los flujos tienen pruebas automáticas que se ejecutan en el CI:
 
-Ejemplos:
+```bash
+npm test
+```
+
+13 pruebas con `node:test`, sin instalar nada:
+- **Estructura:** nombres e ids únicos, conexiones que apuntan a nodos existentes, un webhook POST por flujo, nodos de respuesta, ningún nodo suelto y rutas de webhook sin repetir.
+- **Seguridad:** ningún flujo referencia credenciales ni contiene claves.
+- **Lógica:** el código de cada nodo *Code* se ejecuta con entradas reales: el puntaje y los límites de prioridad (39/40, 69/70 y tope de 100), la normalización de contactos y el agrupado de ventas con redondeo.
+
+Ejemplo de petición al flujo de contactos:
 
 ```bash
 curl -X POST "<URL>/webhook/contacto" -H "Content-Type: application/json" \
   -d '{"nombre":"maría josé","correo":"MARIA@Correo.com","mensaje":"Hola, me interesa trabajar con ustedes"}'
 # -> {"ok":true,"contacto":{"nombre":"María José","correo":"maria@correo.com", ...}}
 ```
-
 ## Licencia
 
 MIT

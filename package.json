@@ -1,0 +1,12 @@
+{
+  "name": "n8n-automatizaciones",
+  "version": "1.0.0",
+  "description": "Flujos de n8n con pruebas que validan su estructura y ejecutan la lógica de sus nodos Code.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "engines": { "node": ">=20" },
+  "license": "MIT"
+}
