@@ -1,0 +1,87 @@
+{
+  "name": "Clasificar postulaciones por prioridad",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "postulacion",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000001",
+      "name": "Webhook postulación",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "postulacion-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "const datos = $input.first().json.body ?? $input.first().json;\nconst { nombre, anios_experiencia = 0, habilidades = [], vacante } = datos;\n\nif (!nombre || !vacante) {\n  return [{ json: { valido: false, error: 'Faltan campos: nombre y vacante son obligatorios' } }];\n}\n\nconst puntaje = Math.min(100, Number(anios_experiencia) * 10 + habilidades.length * 5);\nconst prioridad = puntaje >= 70 ? 'alta' : puntaje >= 40 ? 'media' : 'baja';\n\nreturn [{ json: { valido: true, nombre, vacante, puntaje, prioridad } }];"
+      },
+      "id": "a1b2c3d4-0002-4000-8000-000000000002",
+      "name": "Calcular puntaje",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "cond-valido",
+              "leftValue": "={{ $json.valido }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0003-4000-8000-000000000003",
+      "name": "¿Datos válidos?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { nombre: $json.nombre, vacante: $json.vacante, puntaje: $json.puntaje, prioridad: $json.prioridad } }}",
+        "options": { "responseCode": 200 }
+      },
+      "id": "a1b2c3d4-0004-4000-8000-000000000004",
+      "name": "Responder resultado",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [660, -80]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { error: $json.error } }}",
+        "options": { "responseCode": 400 }
+      },
+      "id": "a1b2c3d4-0005-4000-8000-000000000005",
+      "name": "Responder error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [660, 100]
+    }
+  ],
+  "connections": {
+    "Webhook postulación": { "main": [[{ "node": "Calcular puntaje", "type": "main", "index": 0 }]] },
+    "Calcular puntaje": { "main": [[{ "node": "¿Datos válidos?", "type": "main", "index": 0 }]] },
+    "¿Datos válidos?": {
+      "main": [
+        [{ "node": "Responder resultado", "type": "main", "index": 0 }],
+        [{ "node": "Responder error", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}
