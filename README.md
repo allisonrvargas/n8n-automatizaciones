@@ -7,6 +7,8 @@ Flujos de automatización con [n8n](https://n8n.io) para practicar integración 
 | Flujo | Qué hace |
 | --- | --- |
 | [`clasificar-postulaciones`](flujos/clasificar-postulaciones.json) | Recibe una postulación por webhook, calcula un puntaje y devuelve su prioridad (alta, media o baja). Si faltan datos responde `400`. |
+| [`validar-contacto`](flujos/validar-contacto.json) | Valida nombre, correo y mensaje de un formulario de contacto, normaliza los datos (nombre con mayúsculas, correo en minúsculas) y responde `200` o `400` con la lista de errores. |
+| [`resumen-ventas`](flujos/resumen-ventas.json) | Recibe una lista de ventas, las agrupa por categoría y devuelve unidades, total por categoría, total general y la categoría con más ventas. |
 
 ### Clasificar postulaciones
 
@@ -45,9 +47,17 @@ Respuesta esperada (`200`):
 
 Sin `nombre` o `vacante` responde `400` con el mensaje de error.
 
-## Nota
+## Pruebas
 
-No usa credenciales ni servicios externos, así que se puede importar y probar sin configurar nada.
+Los 3 flujos se importaron y probaron en una instancia local de n8n 2.49.6, con peticiones válidas e inválidas a cada webhook. Ninguno usa credenciales ni servicios externos, así que se pueden importar y probar sin configurar nada.
+
+Ejemplos:
+
+```bash
+curl -X POST "<URL>/webhook/contacto" -H "Content-Type: application/json" \
+  -d '{"nombre":"maría josé","correo":"MARIA@Correo.com","mensaje":"Hola, me interesa trabajar con ustedes"}'
+# -> {"ok":true,"contacto":{"nombre":"María José","correo":"maria@correo.com", ...}}
+```
 
 ## Licencia
 

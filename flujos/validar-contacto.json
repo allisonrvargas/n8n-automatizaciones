@@ -1,0 +1,82 @@
+{
+  "name": "Validar y normalizar contacto",
+  "nodes": [
+    {
+      "parameters": { "httpMethod": "POST", "path": "contacto", "responseMode": "responseNode", "options": {} },
+      "id": "b1b2c3d4-0001-4000-8000-000000000001",
+      "name": "Webhook contacto",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "contacto-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json.body ?? $input.first().json;\nconst errores = [];\nconst nombre = String(d.nombre ?? '').trim();\nconst correo = String(d.correo ?? '').trim().toLowerCase();\nconst mensaje = String(d.mensaje ?? '').trim();\n\nif (nombre.length < 2) errores.push('nombre: mínimo 2 caracteres');\nif (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(correo)) errores.push('correo: formato inválido');\nif (mensaje.length < 10) errores.push('mensaje: mínimo 10 caracteres');\n\nif (errores.length) return [{ json: { valido: false, errores } }];\n\nconst nombreNormalizado = nombre.replace(/\\s+/g, ' ').split(' ').map(p => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()).join(' ');\nreturn [{ json: { valido: true, contacto: { nombre: nombreNormalizado, correo, mensaje, recibido: new Date().toISOString() } } }];"
+      },
+      "id": "b1b2c3d4-0002-4000-8000-000000000002",
+      "name": "Validar y normalizar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "cond-valido",
+              "leftValue": "={{ $json.valido }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b1b2c3d4-0003-4000-8000-000000000003",
+      "name": "¿Es válido?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true, contacto: $json.contacto } }}",
+        "options": { "responseCode": 200 }
+      },
+      "id": "b1b2c3d4-0004-4000-8000-000000000004",
+      "name": "Responder ok",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [660, -80]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: false, errores: $json.errores } }}",
+        "options": { "responseCode": 400 }
+      },
+      "id": "b1b2c3d4-0005-4000-8000-000000000005",
+      "name": "Responder errores",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [660, 100]
+    }
+  ],
+  "connections": {
+    "Webhook contacto": { "main": [[{ "node": "Validar y normalizar", "type": "main", "index": 0 }]] },
+    "Validar y normalizar": { "main": [[{ "node": "¿Es válido?", "type": "main", "index": 0 }]] },
+    "¿Es válido?": {
+      "main": [
+        [{ "node": "Responder ok", "type": "main", "index": 0 }],
+        [{ "node": "Responder errores", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}
