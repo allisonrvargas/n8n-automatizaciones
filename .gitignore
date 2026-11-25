@@ -1,0 +1,15 @@
+# Archivos del sistema y del editor
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+*.log
+
+# Secretos y datos locales de n8n
+.env
+.env.*
+!.env.example
+.n8n/
+node_modules/
