@@ -1,0 +1,42 @@
+{
+  "name": "Resumen de ventas por categoría",
+  "nodes": [
+    {
+      "parameters": { "httpMethod": "POST", "path": "resumen-ventas", "responseMode": "responseNode", "options": {} },
+      "id": "c1b2c3d4-0001-4000-8000-000000000001",
+      "name": "Webhook ventas",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "resumen-ventas-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json.body ?? $input.first().json;\nconst ventas = Array.isArray(d.ventas) ? d.ventas : [];\n\nconst porCategoria = {};\nfor (const v of ventas) {\n  const cat = String(v.categoria ?? 'sin categoría');\n  const total = Number(v.cantidad ?? 0) * Number(v.precio ?? 0);\n  if (!porCategoria[cat]) porCategoria[cat] = { categoria: cat, unidades: 0, total: 0 };\n  porCategoria[cat].unidades += Number(v.cantidad ?? 0);\n  porCategoria[cat].total += total;\n}\n\nconst categorias = Object.values(porCategoria)\n  .map(c => ({ ...c, total: Math.round(c.total * 100) / 100 }))\n  .sort((a, b) => b.total - a.total);\n\nconst totalGeneral = Math.round(categorias.reduce((s, c) => s + c.total, 0) * 100) / 100;\nreturn [{ json: { cantidadVentas: ventas.length, totalGeneral, categoriaTop: categorias[0]?.categoria ?? null, categorias } }];"
+      },
+      "id": "c1b2c3d4-0002-4000-8000-000000000002",
+      "name": "Agrupar por categoría",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": { "responseCode": 200 }
+      },
+      "id": "c1b2c3d4-0003-4000-8000-000000000003",
+      "name": "Responder resumen",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [440, 0]
+    }
+  ],
+  "connections": {
+    "Webhook ventas": { "main": [[{ "node": "Agrupar por categoría", "type": "main", "index": 0 }]] },
+    "Agrupar por categoría": { "main": [[{ "node": "Responder resumen", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}
